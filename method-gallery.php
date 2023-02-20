@@ -418,6 +418,13 @@ function method_gallery_plugin_options_metabox() {
     );
 
     $cmb_options->add_field( array(
+        'name' => 'Theme Configuration',
+        //'desc' => 'This is a title description',
+        'type' => 'title',
+        'id'   => 'theme_config_info'
+    ) );
+
+    $cmb_options->add_field( array(
         'name'    => 'Bootstrap Grid Configuration',
         'id'      => 'grid_cols',
         'type'    => 'radio_inline',
@@ -426,6 +433,13 @@ function method_gallery_plugin_options_metabox() {
             24 => __( '24 Columns', 'cmb2' ),
         ),
         'default' => 12,
+    ) );
+
+    $cmb_options->add_field( array(
+        'name' => 'Swiper Options',
+        //'desc' => 'This is a title description',
+        'type' => 'title',
+        'id'   => 'swiper_config_info'
     ) );
 
     $cmb_options->add_field( array(
@@ -451,6 +465,13 @@ function method_gallery_plugin_options_metabox() {
     ) );
 
     $cmb_options->add_field( array(
+        'name' => 'Image Grid Options',
+        //'desc' => 'This is a title description',
+        'type' => 'title',
+        'id'   => 'grid_config_info'
+    ) );
+
+    $cmb_options->add_field( array(
         'name'    => 'Grid Image Aspect Ratio',
         'id'      => 'grid_aspect',
         'type'    => 'radio_inline',
@@ -470,6 +491,13 @@ function method_gallery_plugin_options_metabox() {
         'type'    => 'select',
         'options' => method_gallery_get_image_size_array(),
         'default' => 'large',
+    ) );
+
+    $cmb_options->add_field( array(
+        'name' => 'Lightbox Options',
+        //'desc' => 'This is a title description',
+        'type' => 'title',
+        'id'   => 'lightbox_config_info'
     ) );
 
     $cmb_options->add_field( array(
