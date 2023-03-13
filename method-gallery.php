@@ -2,8 +2,8 @@
 /**
  * Plugin Name: Method Gallery
  * Plugin URI: https://github.com/pixelwatt/method-gallery
- * Description: This plugin adds filterable galleries to WordPress, called via shortcode. CMB2 is required. This plugin is intended to be used with Method-based themes, but should work with any Bootstrap 5 based theme using either a 12 or 24 column layout.
- * Version: 2.0.0-beta1
+ * Description: This plugin adds filterable galleries to WordPress, called via shortcode. CMB2 and a Bootstrap 5 theme are required.
+ * Version: 2.0.0-beta2
  * Author: Rob Clark
  * Author URI: https://robclark.io
  */
@@ -15,7 +15,7 @@ function method_gallery_enqueue_dependencies() {
     wp_enqueue_style( 'glightbox', plugin_dir_url( __FILE__ ) . 'inc/glightbox/glightbox.min.css', '', '3.2.0' );
     wp_enqueue_script( 'glightbox', plugin_dir_url( __FILE__ ) . 'inc/glightbox/glightbox.min.js', array( 'jquery' ), '3.2.0', false );
 
-    wp_enqueue_style( 'method-gallery', plugin_dir_url( __FILE__ ) . 'assets/css/method-gallery.css', '', '2.0.0-beta1' );
+    wp_enqueue_style( 'method-gallery', plugin_dir_url( __FILE__ ) . 'assets/css/method-gallery.css', '', '2.0.0-beta2' );
 }
 
 add_action( 'wp_enqueue_scripts', 'method_gallery_enqueue_dependencies' );
@@ -46,9 +46,12 @@ function method_gallery_get_term_array( $tax, $none = '', $hide_empty = true ) {
     return $output;
 }
 
-function method_gallery_get_image_size_array() {
+function method_gallery_get_image_size_array( $default = '' ) {
     $sizes = get_intermediate_image_sizes();
     $options = array();
+    if ( ! empty( $default ) ) {
+        $options[""] = $default;
+    }
     if ( is_array( $sizes ) ) {
         if ( 1 <= count( $sizes ) ) {
             foreach ( $sizes as $size ) {
@@ -278,7 +281,82 @@ function method_gallery_gallery_metabox() {
             'grid'   => __( 'Image Grid', 'cmb2' ),
         ),
         'default' => 'swiper',
+        'desc' => 'Choose how to display this gallery, and configure format-specific options below. To configure default sizes and rations, visit the plugin\'s <a href="/wp-admin/options-general.php?page=method_gallery_options">settings page</a>.',
+        'classes' => 'cmb-row-flush-bottom',
     ) );
+
+    // -----------------------------------------
+    // START SWIPER OPTIONS
+    // -----------------------------------------
+
+    $cmb->add_field( array(
+        'name' => 'Slide Image Size',
+        'type'    => 'select',
+        'options' => method_gallery_get_image_size_array( 'Default' ),
+        'default' => '',
+        'id'   => '_method_gallery_display_swiper_size',
+        'before_row' => '<div id="method-gallery-swiper-options-wrap" class="method-gallery-display-options-wrap">',
+    ) );
+
+    $cmb->add_field( array(
+        'name'    => 'Slide Aspect Ratio',
+        'id'      => '_method_gallery_display_swiper_aspect',
+        'type'    => 'radio_inline',
+        'options' => array(
+            ''    => __( 'Default', 'cmb2' ),
+            '1:1' => __( '1:1', 'cmb2' ),
+            '4:3' => __( '4:3', 'cmb2' ),
+            '3:2' => __( '3:2', 'cmb2' ),
+            '8:5' => __( '8:5', 'cmb2' ),
+            '16:9' => __( '16:9', 'cmb2' ),
+        ),
+        'default' => '',
+    ) );
+
+    $cmb->add_field( array(
+        'name'    => 'Display Extra Content?',
+        'id'      => '_method_gallery_extra',
+        'desc'    => 'When only showing one slide at a time (<em>Images Per Row</em> is set to <em>One</em>), check here to include any image titles or descriptions configured to be visible as part of each image\'s swiper slide.',
+        'type'    => 'checkbox',
+        'after_row' => '</div>',
+    ) );
+
+    // -----------------------------------------
+    // END SWIPER OPTIONS
+    // -----------------------------------------
+
+    // -----------------------------------------
+    // START GRID OPTIONS
+    // -----------------------------------------
+
+    $cmb->add_field( array(
+        'name' => 'Grid Image Size',
+        'type'    => 'select',
+        'options' => method_gallery_get_image_size_array( 'Default' ),
+        'default' => '',
+        'id'   => '_method_gallery_display_grid_size',
+        'before_row' => '<div id="method-gallery-grid-options-wrap" class="method-gallery-display-options-wrap">',
+    ) );
+
+    $cmb->add_field( array(
+        'name'    => 'Grid Image Aspect Ratio',
+        'id'      => '_method_gallery_display_grid_aspect',
+        'type'    => 'radio_inline',
+        'options' => array(
+            ''    => __( 'Default', 'cmb2' ),
+            '1:1' => __( '1:1', 'cmb2' ),
+            '4:3' => __( '4:3', 'cmb2' ),
+            '3:2' => __( '3:2', 'cmb2' ),
+            '8:5' => __( '8:5', 'cmb2' ),
+            '16:9' => __( '16:9', 'cmb2' ),
+        ),
+        'default' => '',
+        'after_row' => '</div>',
+    ) );
+
+    // -----------------------------------------
+    // END GRID OPTIONS
+    // -----------------------------------------
 
     $cmb->add_field( array(
         'name'    => 'Images Per Row',
@@ -301,12 +379,11 @@ function method_gallery_gallery_metabox() {
         'type'    => 'checkbox',
     ) );
 
-    $cmb->add_field( array(
-        'name'    => 'Display Extra Content?',
-        'id'      => '_method_gallery_extra',
-        'desc'    => '(Swiper Only) Check here to include any image titles or descriptions configured to be visible as part of each image\'s swiper slide.',
-        'type'    => 'checkbox',
-    ) );
+    
+
+    // -----------------------------------------
+    // FILTER OPTIONS
+    // -----------------------------------------
 
     $cmb->add_field( array(
         'name' => 'Filter Options',
@@ -540,6 +617,7 @@ class Method_Gallery_v2 {
     protected $scripts;
     protected $filters = array();
     protected $sizes   = array();
+    protected $rsizes  = array();
     protected $active_filter;
 
     public function build_gallery( $gid ) {
@@ -730,13 +808,15 @@ class Method_Gallery_v2 {
                         add_swiper' . $this->id . '();
                     ' . $this->scripts;
                     $this->html .= '<div class="swiper method-gallery-swiper-' . $this->id . '"><div class="swiper-wrapper">';
+                    $i = 1;
                     foreach ( $images as $key => $value ) {
                         if ( $this->check_item_visibility( $key ) ) {
                             $this->html .= '
                                 <div class="swiper-slide method-gallery-item-wrap method-gallery-swiper-item-wrap">
-                                    ' . $this->build_item( $key, 'swiper', ( 1 == $per_row ? true : false ) ) . '
+                                    ' . $this->build_item( $key, 'swiper', ( 1 == $per_row ? true : false ), $i ) . '
                                 </div>
                             ';
+                            $i++;
                         }
                     }
                     $this->html .= '</div><div class="swiper-pagination"></div><div class="swiper-button-prev"></div><div class="swiper-button-next"></div></div>';
@@ -761,7 +841,7 @@ class Method_Gallery_v2 {
         return $item_is_visible;
     }
 
-    private function build_item( $key, $intent, $singleslide = false ) {
+    private function build_item( $key, $intent, $singleslide = false, $i = 0 ) {
         $item_tag = 'div';
         $show_title = get_post_meta( $key, 'method_gallery_show_title', true );
         $show_desc = get_post_meta( $key, 'method_gallery_show_desc', true );
@@ -797,7 +877,7 @@ class Method_Gallery_v2 {
             }
         }
         $output = '
-            <' . $item_tag . ' class="method-gallery-item method-gallery-' . $intent . '-item method-gallery-aspect-ratio method-gallery-aspect-ratio-' . $this->get_option( $intent . '_aspect', '1:1' ) . ( 'on' == $this->get_meta( '_method_gallery_lightbox' ) ? ' glightbox glightbox' . $this->id . '" data-gallery="gallery' . $this->id . '" href="' . wp_get_attachment_image_url( $key, $this->sizes["lightbox"] ) .'"' . ( ! empty( $glb_attr ) ? ' data-glightbox="' . $glb_attr . '"' : '' ) : '"' ) . '>
+            <' . $item_tag . ' class="method-gallery-item method-gallery-' . $intent . '-item method-gallery-aspect-ratio method-gallery-aspect-ratio-' . ( $this->get_meta( '_method_gallery_display_' . $intent . '_aspect' ) ? $this->get_meta( '_method_gallery_display_' . $intent . '_aspect' ) : $this->get_option( $intent . '_aspect', '1:1' ) ) . ( 'on' == $this->get_meta( '_method_gallery_lightbox' ) ? ' glightbox glightbox' . $this->id . '" data-gallery="gallery' . $this->id . ( 'swiper' == $intent ? '-' . $i : '' ) . '" href="' . wp_get_attachment_image_url( $key, $this->sizes["lightbox"] ) .'"' . ( ! empty( $glb_attr ) ? ' data-glightbox="' . $glb_attr . '"' : '' ) : '"' ) . '>
                  ' . wp_get_attachment_image( $key, $this->sizes["{$intent}"], false, array( 'class' => 'method-gallery-img' ) ) . '
                  ' . $sw_extra . '
             </' . $item_tag . '>
@@ -808,11 +888,22 @@ class Method_Gallery_v2 {
     }
 
     private function check_sizes() {
+        $this->rsizes = get_intermediate_image_sizes();
         $this->sizes = array(
-            'swiper' => ( has_image_size( $this->get_option( 'swiper_size', '' ) ) ? $this->get_option( 'swiper_size' ) : 'large' ),
-            'grid' => ( has_image_size( $this->get_option( 'grid_size', '' ) ) ? $this->get_option( 'grid_size' ) : 'large' ),
-            'lightbox' => ( has_image_size( $this->get_option( 'lightbox_size', '' ) ) ? $this->get_option( 'lightbox_size' ) : 'full' ),
+            'swiper' => ( $this->has_image_size( $this->get_meta( '_method_gallery_display_swiper_size', '' ) ) ? $this->get_meta( '_method_gallery_display_swiper_size' ) : ( $this->has_image_size( $this->get_option( 'swiper_size', '' ) ) ? $this->get_option( 'swiper_size' ) : 'large' ) ),
+            'grid' => ( $this->has_image_size( $this->get_meta( '_method_gallery_display_grid_size', '' ) ) ? $this->get_meta( '_method_gallery_display_grid_size' ) : ( $this->has_image_size( $this->get_option( 'grid_size', '' ) ) ? $this->get_option( 'grid_size' ) : 'large' ) ),
+            'lightbox' => ( $this->has_image_size( $this->get_option( 'lightbox_size', '' ) ) ? $this->get_option( 'lightbox_size' ) : 'full' ),
         );
+    }
+
+    private function has_image_size( $value ) {
+        $output = false;
+        if ( ! empty( $value ) ) {
+            if ( in_array( $value, $this->rsizes ) ) {
+                $output = true;
+            }
+        }
+        return $output;
     }
 
     private function check_filters() {
@@ -920,100 +1011,66 @@ add_action('wp_ajax_method_gallery_rebuild_body', 'method_gallery_rebuild_body_f
 add_action('wp_ajax_nopriv_method_gallery_rebuild_body', 'method_gallery_rebuild_body_function');
 
 
-// Legacy layout class
+add_action( 'admin_footer', 'method_gallery_editor_scripts' );
 
-class Method_Gallery {
-    protected $items = array();
-    protected $opts  = array(
-        'css_id' => 'method-gallery-swiper',
-        'slide_img_size' => 'large',
-    );
-
-    public function __construct(){
-        $this->register_dependencies();
-        add_action( 'wp_enqueue_scripts', array($this, 'register_dependencies' ));
-    }
-
-    // Load dependencies
-    public function register_dependencies() {
-        wp_enqueue_style( 'swiper', 'https://unpkg.com/swiper@7/swiper-bundle.min.css', '', null );
-        wp_enqueue_script( 'swiper', 'https://unpkg.com/swiper@7/swiper-bundle.min.js', array(), null, false );
-    }
-
-    public function set_options( $args ) {
-        $this->opts = wp_parse_args( $args, $this->opts );
-        return;
-    }
-
-    public function set_items( $items ) {
-        $this->items = $items;
-        return;
-    }
-
-    public function build_gallery() {
-        $output = '';
-        if ( $this->items ) {
-            if ( is_array( $this->items ) ) {
-               // if ( $this->check_key( $this->items[0] ) ) {
-                    $output .= '
-                        <div id="' . $this->opts['css_id'] . '-wrap">
-                            <div id="' . $this->opts['css_id'] . '" class="swiper">
-                                <div class="swiper-wrapper">
-                    ';
-                    foreach ( $this->items as $key => $value ) {
-                        $output .= '
-                            <div class="swiper-slide">' . wp_get_attachment_image( $key, $this->opts['slide_img_size'], false, array( 'class' => 'img-fluid' ) ) . '</div>
-                        ';
+function method_gallery_editor_scripts( $data ) {
+    global $pagenow;
+    if ( 'post.php' === $pagenow && isset($_GET['post']) && 'method_gallery' === get_post_type( $_GET['post'] ) ) {
+        echo '
+            <style>
+                .method-gallery-display-options-wrap {
+                    border: 1px solid #DBDBDB;
+                    background: #F6F6F6;
+                    padding: 18px;
+                    border-radius: 12px;
+                }
+                .method-gallery-display-options-wrap .cmb-row {
+                    padding-top: 1.2em;
+                    border-bottom: 1px solid #DBDBDB !important;
+                }
+                .method-gallery-display-options-wrap .cmb-row:first-of-type {
+                    padding-top: 6px;
+                }
+                .method-gallery-display-options-wrap .cmb-row:last-of-type {
+                    border-bottom: none !important;
+                    padding-bottom: 0 !important;
+                    margin-bottom: 0 !important;
+                }
+                .cmb-row-flush-bottom {
+                    margin-bottom: 0 !important;
+                    border-bottom: none !important;
+                }
+                #cmb2-metabox-method_gallery_shortcode_metabox .cmb2-id--method-gallery-shortcode-info {
+                    padding-bottom: 0 !important;
+                }
+                #cmb2-metabox-method_gallery_shortcode_metabox .cmb2-metabox-description {
+                    padding: 0 !important;
+                }
+            </style>
+            <script>
+                jQuery( document ).ready(function() {
+                    function mgDisplayVisibility() {
+                        selected = jQuery(\'input[name="_method_gallery_format"]:checked\').val();
+                        if (selected == "swiper") {
+                            jQuery("#method-gallery-swiper-options-wrap").css("display", "block");
+                            jQuery("#method-gallery-swiper-options-wrap").css("visibility", "visible");
+                            jQuery("#method-gallery-grid-options-wrap").css("display", "none");
+                            jQuery("#method-gallery-grid-options-wrap").css("visibility", "hidden");
+                        } else {
+                            jQuery("#method-gallery-swiper-options-wrap").css("display", "none");
+                            jQuery("#method-gallery-swiper-options-wrap").css("visibility", "hidden");
+                            jQuery("#method-gallery-grid-options-wrap").css("display", "block");
+                            jQuery("#method-gallery-grid-options-wrap").css("visibility", "visible");
+                        }
                     }
-                    $output .= '
-                                </div>
-                                <div id="' . $this->opts['css_id'] . '-button-prev" class="swiper-button-prev"></div>
-                                <div id="' . $this->opts['css_id'] . '-button-next" class="swiper-button-next"></div>
-                            </div> <!-- end swiper -->
-                        </div> <!-- end outer wrap -->
-                        <style>
-                            #' . $this->opts['css_id'] . '.swiper {
-                                width: 100%;
-                                overflow: hidden;
-                                position: relative;
-                            }
-                            #' . $this->opts['css_id'] . '-button-prev,
-                            #' . $this->opts['css_id'] . '-button-next {
-                                color: #fff;
-                                text-shadow: 0 2px 8px rgba(0,0,0,0.25);
-                            }
-                            #' . $this->opts['css_id'] . '-button-prev {
-                                left: 1.5rem;
-                            }
-                            #' . $this->opts['css_id'] . '-button-next {
-                                right: 1.5rem;
-                            }
-                        </style>
-                        <script>
-                            const swiper = new Swiper(\'#' . $this->opts['css_id'] . '\', {
-                                loop: true,
-                                navigation: {
-                                    nextEl: \'#' . $this->opts['css_id'] . '-button-next\',
-                                    prevEl: \'#' . $this->opts['css_id'] . '-button-prev\',
-                                },
-                            });
-                        </script>
-                    ';
-                //}
-            }
-        }
-        return $output;
+                    mgDisplayVisibility();
+                    jQuery(\'input[type="radio"][name="_method_gallery_format"]\').change(function() {
+                        mgDisplayVisibility();
+                    });
+                });
+            </script>
+        ';
     }
-
-    public function check_key( $key ) {
-        $output = false;
-        if ( isset( $key ) ) {
-            if ( ! empty( $key ) ) {
-                $output = true;
-            }
-        }
-        return $output;
-    }
-
+    return $data;
 }
 
