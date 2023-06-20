@@ -3,7 +3,7 @@
  * Plugin Name: Method Gallery
  * Plugin URI: https://github.com/pixelwatt/method-gallery
  * Description: This plugin adds filterable galleries to WordPress, called via shortcode. CMB2 and a Bootstrap 5 theme are required.
- * Version: 2.0.0-beta2
+ * Version: 2.0.0-beta3
  * Author: Rob Clark
  * Author URI: https://robclark.io
  */
@@ -787,8 +787,8 @@ class Method_Gallery_v2 {
 
                           // Navigation arrows
                           navigation: {
-                            nextEl: \'.method-gallery-swiper-' . $this->id . ' .swiper-button-next\',
-                            prevEl: \'.method-gallery-swiper-' . $this->id . ' .swiper-button-prev\',
+                            nextEl: \'.method-gallery-swiper-arrows-' . $this->id . ' .swiper-button-next\',
+                            prevEl: \'.method-gallery-swiper-arrows-' . $this->id . ' .swiper-button-prev\',
                           },
                           slidesPerView: 1,
                           breakpoints: {
@@ -807,7 +807,7 @@ class Method_Gallery_v2 {
                         }
                         add_swiper' . $this->id . '();
                     ' . $this->scripts;
-                    $this->html .= '<div class="swiper method-gallery-swiper-' . $this->id . '"><div class="swiper-wrapper">';
+                    $this->html .= '<div class="method-gallery-swiper-arrows method-gallery-swiper-arrows-' . $this->id . '"><div class="swiper-button-prev"></div><div class="swiper-button-next"></div></div><div class="swiper method-gallery-swiper method-gallery-swiper-' . $this->id . '"><div class="swiper-wrapper">';
                     $i = 1;
                     foreach ( $images as $key => $value ) {
                         if ( $this->check_item_visibility( $key ) ) {
@@ -819,7 +819,7 @@ class Method_Gallery_v2 {
                             $i++;
                         }
                     }
-                    $this->html .= '</div><div class="swiper-pagination"></div><div class="swiper-button-prev"></div><div class="swiper-button-next"></div></div>';
+                    $this->html .= '</div><div class="swiper-pagination"></div></div>';
                 }
             }
         }

@@ -2,6 +2,10 @@
 
 This plugin adds filterable galleries to WordPress, called via shortcode. CMB2 and a Bootstrap 5 theme are required.
 
+## v2.0.0-beta3
+
+This release changes the location of the swiper arrows in markup output.
+
 ---
 
 ## v2.0.0-beta2
