@@ -3,7 +3,7 @@
  * Plugin Name: Method Gallery
  * Plugin URI: https://github.com/pixelwatt/method-gallery
  * Description: This plugin adds filterable galleries to WordPress, called via shortcode. CMB2 and a Bootstrap 5 theme are required.
- * Version: 2.0.0-beta3
+ * Version: 2.0.0-beta4
  * Author: Rob Clark
  * Author URI: https://robclark.io
  */
@@ -15,7 +15,7 @@ function method_gallery_enqueue_dependencies() {
     wp_enqueue_style( 'glightbox', plugin_dir_url( __FILE__ ) . 'inc/glightbox/glightbox.min.css', '', '3.2.0' );
     wp_enqueue_script( 'glightbox', plugin_dir_url( __FILE__ ) . 'inc/glightbox/glightbox.min.js', array( 'jquery' ), '3.2.0', false );
 
-    wp_enqueue_style( 'method-gallery', plugin_dir_url( __FILE__ ) . 'assets/css/method-gallery.css', '', '2.0.0-beta2' );
+    wp_enqueue_style( 'method-gallery', plugin_dir_url( __FILE__ ) . 'assets/css/method-gallery.css', '', '2.0.0-beta4' );
 }
 
 add_action( 'wp_enqueue_scripts', 'method_gallery_enqueue_dependencies' );
@@ -423,6 +423,38 @@ function method_gallery_gallery_metabox() {
         ),
     ) );
 
+    // -----------------------------------------
+    // FILTER OPTIONS
+    // -----------------------------------------
+
+    $cmb->add_field( array(
+        'name' => 'Custom Control Selectors',
+        'desc' => 'Only for custom theme integrations. Proceed with caution.',
+        'type' => 'title',
+        'id'   => '_method_gallery_selector_options'
+    ) );
+
+    $cmb->add_field( array(
+        'name' => 'Previous Slide Button Selector',
+        //'desc' => 'Only for custom theme integrations. Proceed with caution.',
+        'type' => 'text',
+        'id'   => '_method_gallery_selector_prev'
+    ) );
+
+    $cmb->add_field( array(
+        'name' => 'Next Slide Button Selector',
+        //'desc' => 'Only for custom theme integrations. Proceed with caution.',
+        'type' => 'text',
+        'id'   => '_method_gallery_selector_next'
+    ) );
+
+    $cmb->add_field( array(
+        'name' => 'Pagination Selector',
+        //'desc' => 'Only for custom theme integrations. Proceed with caution.',
+        'type' => 'text',
+        'id'   => '_method_gallery_selector_pagination'
+    ) );
+
 }
 
 
@@ -782,13 +814,13 @@ class Method_Gallery_v2 {
                           observeParents: true,
                           // If we need pagination
                           pagination: {
-                            el: \'.method-gallery-swiper-' . $this->id . ' .swiper-pagination\',
+                            el: \'' . ( $this->get_meta( '_method_gallery_selector_pagination' ) ? $this->get_meta( '_method_gallery_selector_pagination' ) : '.method-gallery-swiper-' . $this->id . ' .swiper-pagination' ) . '\',
                           },
 
                           // Navigation arrows
                           navigation: {
-                            nextEl: \'.method-gallery-swiper-arrows-' . $this->id . ' .swiper-button-next\',
-                            prevEl: \'.method-gallery-swiper-arrows-' . $this->id . ' .swiper-button-prev\',
+                            nextEl: \'' . ( $this->get_meta( '_method_gallery_selector_next' ) ? $this->get_meta( '_method_gallery_selector_next' ) : '.method-gallery-swiper-arrows-' . $this->id . ' .swiper-button-next' ) . '\',
+                            prevEl: \'' . ( $this->get_meta( '_method_gallery_selector_prev' ) ? $this->get_meta( '_method_gallery_selector_prev' ) : '.method-gallery-swiper-arrows-' . $this->id . ' .swiper-button-prev' ) . '\',
                           },
                           slidesPerView: 1,
                           breakpoints: {
