@@ -815,6 +815,7 @@ class Method_Gallery_v2 {
                           // If we need pagination
                           pagination: {
                             el: \'' . ( $this->get_meta( '_method_gallery_selector_pagination' ) ? $this->get_meta( '_method_gallery_selector_pagination' ) : '.method-gallery-swiper-' . $this->id . ' .swiper-pagination' ) . '\',
+                            clickable: true,
                           },
 
                           // Navigation arrows
